@@ -40,11 +40,13 @@ export default function App() {
     try {
       const res = await fetch(`${apiBase}/api/health`);
       if (res.ok) {
-        setIsConnected(true);
+        const data = await res.json();
+        // Server responded successfully; if database status is tracked, ensure it's responsive
+        setIsConnected(data.status === 'ok');
       } else {
         setIsConnected(false);
       }
-    } catch (e) {
+    } catch {
       setIsConnected(false);
     }
   };
@@ -52,6 +54,13 @@ export default function App() {
   useEffect(() => {
     checkHealth();
     fetchUrls();
+
+    // Check backend health periodically every 15 seconds to keep connection status fresh
+    const interval = setInterval(() => {
+      checkHealth();
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleUrlCreated = (newUrl) => {
